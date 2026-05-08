@@ -2,7 +2,7 @@ from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from typing import List
-
+from fastapi.middleware.cors import CORSMiddleware
 # Importaciones locales
 from . import models, schemas, auth, database 
 from .database import engine, get_db
@@ -12,6 +12,17 @@ app = FastAPI()
 
 # Crear tablas al iniciar
 models.Base.metadata.create_all(bind=engine)
+
+
+
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"], # En producción cambia esto por tu dominio real
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # --- 1. AUTENTICACIÓN (LOGIN) ---
 
