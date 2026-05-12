@@ -56,3 +56,8 @@ class FormResponse(FormBase):
 
     class Config:
         from_attributes = True
+
+class FormUpdate(BaseModel):
+    nombre: Optional[str] = None
+    link: Optional[str] = None
+    id_departamento: Optional[int] = None

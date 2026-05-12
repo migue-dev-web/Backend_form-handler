@@ -242,3 +242,62 @@ def obtener_mis_formularios(
             "nombre_departamento": f.depto_rel.nombre
         } for f in query
     ]
+
+# --- CRUD ADICIONAL DE FORMULARIOS ---
+
+@app.put("/formularios/{form_id}", response_model=schemas.FormResponse)
+def actualizar_formulario(
+    form_id: int, 
+    form_data: schemas.FormUpdate, 
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(auth.get_current_user)
+):
+    # SEGURIDAD: Solo admin edita
+    if current_user["departamento"] != "admin":
+        raise HTTPException(status_code=403, detail="No autorizado")
+
+    db_form = db.query(models.FormularioDB).filter(models.FormularioDB.id == form_id).first()
+    if not db_form:
+        raise HTTPException(status_code=404, detail="Formulario no encontrado")
+
+    # Actualizar solo los campos que se enviaron
+    update_data = form_data.model_dump(exclude_unset=True)
+    
+    # Si se intenta cambiar el departamento, validar que el nuevo exista
+    if "id_departamento" in update_data:
+        depto = db.query(models.DepartamentoDB).filter(models.DepartamentoDB.id == update_data["id_departamento"]).first()
+        if not depto:
+            raise HTTPException(status_code=404, detail="El nuevo departamento no existe")
+
+    for key, value in update_data.items():
+        setattr(db_form, key, value)
+
+    db.commit()
+    db.refresh(db_form)
+    
+    return {
+        "id": db_form.id,
+        "nombre": db_form.nombre,
+        "link": db_form.link,
+        "id_departamento": db_form.id_departamento,
+        "nombre_departamento": db_form.depto_rel.nombre
+    }
+
+
+@app.delete("/formularios/{form_id}", status_code=status.HTTP_204_NO_CONTENT)
+def eliminar_formulario(
+    form_id: int, 
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(auth.get_current_user)
+):
+    # SEGURIDAD: Solo admin elimina
+    if current_user["departamento"] != "admin":
+        raise HTTPException(status_code=403, detail="No autorizado")
+
+    db_form = db.query(models.FormularioDB).filter(models.FormularioDB.id == form_id).first()
+    if not db_form:
+        raise HTTPException(status_code=404, detail="Formulario no encontrado")
+
+    db.delete(db_form)
+    db.commit()
+    return None
