@@ -3,6 +3,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from typing import List
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import or_, and_
 # Importaciones locales
 from . import models, schemas, auth, database 
 from .database import engine, get_db
@@ -218,21 +219,43 @@ def crear_formulario(
         "nombre_departamento": depto.nombre
     }
 
-@app.get("/formularios/mis-formularios", response_model=List[schemas.FormResponse])
-def obtener_mis_formularios(
+@app.get("/formularios/mis-formularios", response_model=list[schemas.FormResponse])
+def leer_mis_formularios(
     db: Session = Depends(get_db),
     current_user: dict = Depends(auth.get_current_user)
 ):
-    # 1. Si es ADMIN, retornar TODOS los formularios
-    if current_user["departamento"] == "admin":
-        query = db.query(models.FormularioDB).all()
-    else:
-        # 2. Si es usuario normal, filtrar por su departamento
-        # Buscamos el ID del departamento del usuario actual
-        user_db = db.query(models.UserDB).filter(models.UserDB.email == current_user["email"]).first()
-        query = db.query(models.FormularioDB).filter(models.FormularioDB.id_departamento == user_db.id_departamento).all()
+    ahora = datetime.now()
+    es_admin = current_user["departamento"] == "admin"
 
-    # Formatear la respuesta
+    # 1. Buscamos el depto del usuario
+    depto = db.query(models.DepartamentoDB).filter(
+        models.DepartamentoDB.codigo == current_user["departamento"]
+    ).first()
+
+    if not depto and not es_admin:
+        raise HTTPException(status_code=404, detail="Departamento no encontrado")
+
+    # 2. Construcción de la consulta inteligente
+    query = db.query(models.FormularioDB).outerjoin(models.FormScheduleDB)
+
+    if not es_admin:
+        # Filtro de departamento
+        query = query.filter(models.FormularioDB.id_departamento == depto.id)
+        
+        # FILTRO DE TIEMPO:
+        # Mostrar si: (No tiene programación) O (Está dentro del rango)
+        query = query.filter(
+            or_(
+                models.FormScheduleDB.id == None,
+                and_(
+                    models.FormScheduleDB.fecha_inicio <= ahora,
+                    models.FormScheduleDB.fecha_fin >= ahora
+                )
+            )
+        )
+
+    formularios = query.all()
+    
     return [
         {
             "id": f.id,
@@ -240,9 +263,8 @@ def obtener_mis_formularios(
             "link": f.link,
             "id_departamento": f.id_departamento,
             "nombre_departamento": f.depto_rel.nombre
-        } for f in query
+        } for f in formularios
     ]
-
 # --- CRUD ADICIONAL DE FORMULARIOS ---
 
 @app.put("/formularios/{form_id}", response_model=schemas.FormResponse)
@@ -301,3 +323,18 @@ def eliminar_formulario(
     db.delete(db_form)
     db.commit()
     return None
+
+@app.post("/formularios/programar", response_model=schemas.ScheduleResponse)
+def programar_formulario(
+    schedule: schemas.ScheduleCreate, 
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(auth.get_current_user)
+):
+    if current_user["departamento"] != "admin":
+        raise HTTPException(status_code=403, detail="No autorizado")
+    
+    nuevo_horario = models.FormScheduleDB(**schedule.model_dump())
+    db.add(nuevo_horario)
+    db.commit()
+    db.refresh(nuevo_horario)
+    return nuevo_horario

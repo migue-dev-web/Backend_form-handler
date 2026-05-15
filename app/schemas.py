@@ -1,5 +1,6 @@
 from pydantic import BaseModel, EmailStr
 from typing import Optional
+from datetime import datetime
 
 class UserBase(BaseModel):
     email: EmailStr
@@ -61,3 +62,13 @@ class FormUpdate(BaseModel):
     nombre: Optional[str] = None
     link: Optional[str] = None
     id_departamento: Optional[int] = None
+
+class ScheduleCreate(BaseModel):
+    id_formulario: int
+    fecha_inicio: datetime
+    fecha_fin: datetime
+
+class ScheduleResponse(ScheduleCreate):
+    id: int
+    class Config:
+        from_attributes = True

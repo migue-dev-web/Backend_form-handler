@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey
+from datetime import datetime
+from sqlalchemy import Column, Integer, DateTime, String, ForeignKey, Boolean
 from .database import Base
 from sqlalchemy.orm import relationship
 
@@ -35,3 +36,14 @@ class FormularioDB(Base):
     
     # Relación para acceder fácilmente a los datos del depto
     depto_rel = relationship("DepartamentoDB")
+
+class FormScheduleDB(Base):
+    __tablename__ = "form_schedules"
+
+    id = Column(Integer, primary_key=True, index=True)
+    id_formulario = Column(Integer, ForeignKey("formularios.id", ondelete="CASCADE"))
+    fecha_inicio = Column(DateTime, nullable=False)
+    fecha_fin = Column(DateTime, nullable=False)
+
+    # Relación para saber a qué formulario pertenece
+    formulario = relationship("FormularioDB")
