@@ -211,6 +211,15 @@ def crear_formulario(
     db.add(nuevo_form)
     db.commit()
     db.refresh(nuevo_form)
+
+    registrar_log(
+        db=db,
+        usuario=current_user["email"],
+        accion="CREAR",
+        tabla="formularios",
+        registro_id=nuevo_form.id,
+        detalles=f"Formulario creado: '{nuevo_form.nombre}' con link '{nuevo_form.link}'"
+    )
     
     return {
         "id": nuevo_form.id,
@@ -280,6 +289,7 @@ def actualizar_formulario(
         raise HTTPException(status_code=403, detail="No autorizado")
 
     db_form = db.query(models.FormularioDB).filter(models.FormularioDB.id == form_id).first()
+    valores_anteriores = f"Nombre: {db_form.nombre}, Link: {db_form.link}"
     if not db_form:
         raise HTTPException(status_code=404, detail="Formulario no encontrado")
 
@@ -296,6 +306,16 @@ def actualizar_formulario(
         setattr(db_form, key, value)
 
     db.commit()
+
+    registrar_log(
+        db=db,
+        usuario=current_user["email"],
+        accion="EDITAR",
+        tabla="formularios",
+        registro_id=db_form.id,
+        detalles=f"Antes -> {valores_anteriores} | Ahora -> Nombre: {db_form.nombre}, Link: {db_form.link}"
+    )
+
     db.refresh(db_form)
     
     return {
@@ -321,8 +341,18 @@ def eliminar_formulario(
     if not db_form:
         raise HTTPException(status_code=404, detail="Formulario no encontrado")
 
+    detalles_eliminado = f"Formulario eliminado: '{db_form.nombre}' asignado al depto ID {db_form.id_departamento}"
+
     db.delete(db_form)
     db.commit()
+    registrar_log(
+        db=db,
+        usuario=current_user["email"],
+        accion="ELIMINAR",
+        tabla="formularios",
+        registro_id=form_id,
+        detalles=detalles_eliminado
+    )
     return None
 
 @app.post("/formularios/programar", response_model=schemas.ScheduleResponse)
@@ -339,3 +369,29 @@ def programar_formulario(
     db.commit()
     db.refresh(nuevo_horario)
     return nuevo_horario
+
+
+def registrar_log(db: Session, usuario: str, accion: str, tabla: str, registro_id: int, detalles: str = None):
+    log = models.AuditoriaDB(
+        usuario=usuario,
+        accion=accion,
+        tabla=tabla,
+        registro_id=registro_id,
+        detalles=detalles
+    )
+    db.add(log)
+    db.commit()
+
+@app.get("/admin/auditoria", response_model=list[schemas.AuditoriaResponse])
+def ver_historial_cambios(
+    skip: int = 0,
+    limit: int = 50,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(auth.get_current_user)
+):
+   
+    if current_user["departamento"] != "admin":
+        raise HTTPException(status_code=403, detail="No autorizado")
+
+    
+    return db.query(models.AuditoriaDB).order_by(models.AuditoriaDB.fecha.desc()).offset(skip).limit(limit).all()

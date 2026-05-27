@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import Column, Integer, DateTime, String, ForeignKey, Boolean
+from sqlalchemy import Column, Integer, DateTime, String, ForeignKey, Boolean, Text
 from .database import Base
 from sqlalchemy.orm import relationship
 
@@ -47,3 +47,14 @@ class FormScheduleDB(Base):
 
     # Relación para saber a qué formulario pertenece
     formulario = relationship("FormularioDB")
+
+class AuditoriaDB(Base):
+    __tablename__ = "auditorias"
+
+    id = Column(Integer, primary_key=True, index=True)
+    usuario = Column(String, index=True)          
+    accion = Column(String)                     
+    tabla = Column(String)                        
+    registro_id = Column(Integer)                 
+    detalles = Column(Text, nullable=True)       
+    fecha = Column(DateTime, default=datetime.utcnow)

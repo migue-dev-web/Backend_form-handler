@@ -72,3 +72,15 @@ class ScheduleResponse(ScheduleCreate):
     id: int
     class Config:
         from_attributes = True
+
+class AuditoriaResponse(BaseModel):
+    id: int
+    usuario: str
+    accion: str
+    tabla: str
+    registro_id: int
+    detalles: Optional[str]
+    fecha: datetime
+
+    class Config:
+        from_attributes = True
