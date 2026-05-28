@@ -11,13 +11,6 @@ from .database import engine, get_db
 from .auth import get_current_user
 
 app = FastAPI()
-
-# Crear tablas al iniciar
-models.Base.metadata.create_all(bind=engine)
-
-
-
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"], # En producción cambia esto por tu dominio real
@@ -25,6 +18,14 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Crear tablas al iniciar
+models.Base.metadata.create_all(bind=engine)
+
+
+
+
+
 
 # --- 1. AUTENTICACIÓN (LOGIN) ---
 
