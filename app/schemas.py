@@ -1,5 +1,5 @@
-from pydantic import BaseModel, EmailStr
-from typing import Optional
+from pydantic import BaseModel, EmailStr, HttpUrl
+from typing import Optional, List
 from datetime import datetime
 
 class UserBase(BaseModel):
@@ -84,3 +84,19 @@ class AuditoriaResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+class GoogleSheetCreate(BaseModel):
+    nombre: str
+    link_sheet: str
+
+class GoogleSheetResponse(GoogleSheetCreate):
+    id: int
+    class Config:
+        from_attributes = True
+
+class VincularFormSheet(BaseModel):
+    id_sheet: int
+    id_formulario: int
+
+class SheetConFormulariosResponse(GoogleSheetResponse):
+    formularios_vinculados: List[int] = []

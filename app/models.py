@@ -58,3 +58,21 @@ class AuditoriaDB(Base):
     registro_id = Column(Integer)                 
     detalles = Column(Text, nullable=True)       
     fecha = Column(DateTime, default=datetime.utcnow)
+
+class GoogleSheetDB(Base):
+    __tablename__ = "google_sheets"
+
+    id = Column(Integer, primary_key=True, index=True)
+    nombre = Column(String, nullable=False)        
+    link_sheet = Column(String, nullable=False)
+
+class FormSheetVinculoDB(Base):
+    __tablename__ = "form_sheet_vinculos"
+
+    id = Column(Integer, primary_key=True, index=True)
+    id_sheet = Column(Integer, ForeignKey("google_sheets.id", ondelete="CASCADE"))
+    id_formulario = Column(Integer, ForeignKey("formularios.id", ondelete="CASCADE"))
+
+   
+    sheet = relationship("GoogleSheetDB")
+    formulario = relationship("FormularioDB")
