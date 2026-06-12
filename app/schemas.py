@@ -46,6 +46,7 @@ class FormBase(BaseModel):
     nombre: str
     link: str
     id_departamento: int
+    sheet_id: Optional[str] = None
 
 class FormCreate(FormBase):
     pass
@@ -62,6 +63,7 @@ class FormUpdate(BaseModel):
     nombre: Optional[str] = None
     link: Optional[str] = None
     id_departamento: Optional[int] = None
+    sheet_id: Optional[str] = None
 
 class ScheduleCreate(BaseModel):
     id_formulario: int
@@ -84,19 +86,3 @@ class AuditoriaResponse(BaseModel):
 
     class Config:
         from_attributes = True
-
-class GoogleSheetCreate(BaseModel):
-    nombre: str
-    link_sheet: str
-
-class GoogleSheetResponse(GoogleSheetCreate):
-    id: int
-    class Config:
-        from_attributes = True
-
-class VincularFormSheet(BaseModel):
-    id_sheet: int
-    id_formulario: int
-
-class SheetConFormulariosResponse(GoogleSheetResponse):
-    formularios_vinculados: List[int] = []

@@ -9,6 +9,8 @@ from datetime import datetime
 from . import models, schemas, auth, database 
 from .database import engine, get_db
 from .auth import get_current_user
+from app.scheduler import scheduler
+from .sheets_csv import leer_respuestas
 
 app = FastAPI()
 app.add_middleware(
@@ -226,6 +228,7 @@ def crear_formulario(
         "id": nuevo_form.id,
         "nombre": nuevo_form.nombre,
         "link": nuevo_form.link,
+        "sheet_id": nuevo_form.sheet_id,
         "id_departamento": nuevo_form.id_departamento,
         "nombre_departamento": depto.nombre
     }
@@ -272,6 +275,7 @@ def leer_mis_formularios(
             "id": f.id,
             "nombre": f.nombre,
             "link": f.link,
+            "sheet_id": f.sheet_id,
             "id_departamento": f.id_departamento,
             "nombre_departamento": f.depto_rel.nombre
         } for f in formularios
@@ -323,6 +327,7 @@ def actualizar_formulario(
         "id": db_form.id,
         "nombre": db_form.nombre,
         "link": db_form.link,
+        "sheet_id": db_form.sheet_id,
         "id_departamento": db_form.id_departamento,
         "nombre_departamento": db_form.depto_rel.nombre
     }
@@ -397,95 +402,47 @@ def ver_historial_cambios(
     
     return db.query(models.AuditoriaDB).order_by(models.AuditoriaDB.fecha.desc()).offset(skip).limit(limit).all()
 
-@app.post("/sheets", response_model=schemas.GoogleSheetResponse)
-def registrar_google_sheet(
-    sheet: schemas.GoogleSheetCreate, 
-    db: Session = Depends(get_db), 
-    current_user: dict = Depends(auth.get_current_user)
-):
-    if current_user["departamento"] != "admin":
-        raise HTTPException(status_code=403, detail="No autorizado")
 
-    nueva_sheet = models.GoogleSheetDB(**sheet.model_dump())
-    db.add(nueva_sheet)
-    db.commit()
-    db.refresh(nueva_sheet)
+@app.on_event("startup")
+def iniciar_scheduler():
+    if not scheduler.running:
+        scheduler.start()
+        print("Scheduler periódico iniciado con éxito.")
 
-    # Registro en Auditoría
-    registrar_log(
-        db=db,
-        usuario=current_user["email"],
-        accion="CREAR",
-        tabla="google_sheets",
-        registro_id=nueva_sheet.id,
-        detalles=f"Google Sheet registrada: '{nueva_sheet.nombre}'"
-    )
-    return nueva_sheet
-
-@app.post("/sheets/vincular")
-def vincular_formulario_a_sheet(
-    vinculo: schemas.VincularFormSheet, 
+@app.get("/departamentos/{depto_id}/respuestas")
+def respuestas_por_departamento(
+    depto_id: int,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(auth.get_current_user)
+    current_user: dict = Depends(auth.get_current_user),
 ):
     if current_user["departamento"] != "admin":
         raise HTTPException(status_code=403, detail="No autorizado")
 
-    
-    sheet_existe = db.query(models.GoogleSheetDB).filter(models.GoogleSheetDB.id == vinculo.id_sheet).first()
-    form_existe = db.query(models.FormularioDB).filter(models.FormularioDB.id == vinculo.id_formulario).first()
-
-    if not sheet_existe or not form_existe:
-        raise HTTPException(status_code=404, detail="La Sheet o el Formulario especificado no existen")
-
-    
-    duplicado = db.query(models.FormSheetVinculoDB).filter(
-        models.FormSheetVinculoDB.id_sheet == vinculo.id_sheet,
-        models.FormSheetVinculoDB.id_formulario == vinculo.id_formulario
+    depto = db.query(models.DepartamentoDB).filter(
+        models.DepartamentoDB.id == depto_id
     ).first()
-    
-    if duplicado:
-        raise HTTPException(status_code=400, detail="Este formulario ya está vinculado a esta Sheet")
+    if not depto:
+        raise HTTPException(status_code=404, detail="Departamento no encontrado")
 
-    nuevo_vinculo = models.FormSheetVinculoDB(**vinculo.model_dump())
-    db.add(nuevo_vinculo)
-    db.commit()
+    forms = db.query(models.FormularioDB).filter(
+        models.FormularioDB.id_departamento == depto_id
+    ).all()
 
-    
-    registrar_log(
-        db=db,
-        usuario=current_user["email"],
-        accion="VINCULAR",
-        tabla="form_sheet_vinculos",
-        registro_id=nuevo_vinculo.id,
-        detalles=f"Se vinculó el Form ID {vinculo.id_formulario} a la Sheet ID {vinculo.id_sheet}"
-    )
+    salida = []
+    for f in forms:
+        item = {
+            "id": f.id, "nombre": f.nombre, "tiene_sheet": False,
+            "headers": [], "rows": [], "total": 0, "error": None,
+        }
+        if not f.sheet_id:
+            item["error"] = "Sin hoja de respuestas vinculada"
+            salida.append(item)
+            continue
+        try:
+            headers, rows = leer_respuestas(f.sheet_id)
+            item.update(tiene_sheet=True, headers=headers, rows=rows, total=len(rows))
+        except Exception as e:
+            item["error"] = f"No se pudo leer la hoja: {e}"
+        salida.append(item)
 
-    return {"detail": "Formulario vinculado exitosamente a la Google Sheet"}
-
-@app.get("/admin/sheets", response_model=list[schemas.SheetConFormulariosResponse])
-def listar_sheets_admin(
-    skip: int = 0,
-    limit: int = 10,
-    db: Session = Depends(get_db),
-    current_user: dict = Depends(auth.get_current_user)
-):
-    if current_user["departamento"] != "admin":
-        raise HTTPException(status_code=403, detail="No autorizado")
-
-    sheets = db.query(models.GoogleSheetDB).offset(skip).limit(limit).all()
-    resultado = []
-
-    for s in sheets:
-        # Buscamos qué formularios pertenecen a esta sheet en la tabla pivote
-        vinculos = db.query(models.FormSheetVinculoDB).filter(models.FormSheetVinculoDB.id_sheet == s.id).all()
-        ids_formularios = [v.id_formulario for v in vinculos]
-
-        resultado.append({
-            "id": s.id,
-            "nombre": s.nombre,
-            "link_sheet": s.link_sheet,
-            "formularios_vinculados": ids_formularios
-        })
-
-    return resultado
+    return {"departamento": depto.nombre, "formularios": salida}
