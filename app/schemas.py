@@ -7,6 +7,12 @@ class UserBase(BaseModel):
     nombre: str
     departamento: str # Aquí guardamos el "tag" (it, ventas, rrhh)
 
+class UsuarioUpdate(BaseModel):
+    nombre: Optional[str] = None
+    email: Optional[EmailStr] = None
+    departamento: Optional[str] = None  # Ej: "sistemas", "admin", "contabilidad"
+    password: Optional[str] = None
+
 class UserCreate(BaseModel):
     nombre: str
     email: EmailStr

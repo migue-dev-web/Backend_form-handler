@@ -122,6 +122,50 @@ def crear_usuario(
         "departamento": depto.nombre
     }
 
+@app.put("/admin/usuarios/{usuario_id}", response_model=dict)
+def actualizar_usuario(
+    usuario_id: int, 
+    usuario_data: schemas.UsuarioUpdate, 
+    db: Session = Depends(get_db), 
+    current_user: dict = Depends(auth.get_current_user)
+):
+    # 1. Verificar seguridad (Solo Admin puede editar usuarios)
+    if current_user["departamento"] != "admin":
+        raise HTTPException(status_code=403, detail="No autorizado para modificar usuarios")
+
+    # 2. Buscar al usuario en la base de datos
+    db_usuario = db.query(models.UsuarioDB).filter(models.UsuarioDB.id == usuario_id).first()
+    if not db_usuario:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+
+    # 3. Guardar estado anterior para el registro de auditoría
+    datos_anteriores = f"Nombre: {db_usuario.nombre}, Email: {db_usuario.email}, Depto: {db_usuario.departamento}"
+
+    # 4. Actualizar los campos que fueron enviados en la petición
+    payload = usuario_data.model_dump(exclude_unset=True) # exclude_unset evita sobreescribir con None lo que no se mandó
+    
+    for key, value in payload.items():
+        if key == "password":
+            # Si se envió una contraseña nueva, la encriptamos antes de guardarla
+            db_usuario.hashed_password = auth.get_password_hash(value)
+        else:
+            setattr(db_usuario, key, value)
+
+    db.commit()
+    db.refresh(db_usuario)
+
+    # 5. Registrar la acción en el historial de cambios (Auditoría)
+    registrar_log(
+        db=db,
+        usuario=current_user["email"],
+        accion="EDITAR",
+        tabla="usuarios",
+        registro_id=usuario_id,
+        detalles=f"Antes -> {datos_anteriores} | Ahora -> Nombre: {db_usuario.nombre}, Email: {db_usuario.email}, Depto: {db_usuario.departamento}"
+    )
+
+    return {"detail": f"Usuario '{db_usuario.nombre}' actualizado con éxito."}
+
 @app.delete("/usuarios/{usuario_id}", status_code=status.HTTP_204_NO_CONTENT)
 def eliminar_usuario(
     usuario_id: int, 
@@ -201,11 +245,11 @@ def crear_formulario(
     db: Session = Depends(get_db),
     current_user: dict = Depends(auth.get_current_user)
 ):
-    # Solo el administrador puede dar de alta formularios
+    
     if current_user["departamento"] != "admin":
         raise HTTPException(status_code=403, detail="No tienes permiso para registrar formularios")
     
-    # Verificar que el depto asignado exista
+    
     depto = db.query(models.DepartamentoDB).filter(models.DepartamentoDB.id == form_in.id_departamento).first()
     if not depto:
         raise HTTPException(status_code=404, detail="El departamento asignado no existe")
