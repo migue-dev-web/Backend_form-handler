@@ -490,3 +490,10 @@ def respuestas_por_departamento(
         salida.append(item)
 
     return {"departamento": depto.nombre, "formularios": salida}
+
+@app.get("/test-cron")
+def probar_cron_manualmente(db: Session = Depends(get_db)):
+    from app.scheduler import evaluar_y_notificar_formularios
+    print("🚀 Forzando la ejecución del scheduler manualmente...")
+    evaluar_y_notificar_formularios()
+    return {"detail": "Función ejecutada. Revisa los logs de Render ahora."}
