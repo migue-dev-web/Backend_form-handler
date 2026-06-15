@@ -26,7 +26,7 @@ def evaluar_y_notificar_formularios():
         for prog in programaciones_apertura:
             form = prog.formulario
             # Consumir usuarios relacionados al departamento del formulario
-            usuarios = db.query(models.UsuarioDB).filter(models.UsuarioDB.id_departamento == form.id_departamento).all()
+            usuarios = db.query(models.UserDB).filter(models.UserDB.id_departamento == form.id_departamento).all()
             print(f"   👥 Usuarios encontrados para el Depto {form.id_departamento}: {len(usuarios)}")
             for usuario in usuarios:
                 print(f"   📧 Intentando enviar correo a: {usuario.email}")
@@ -57,7 +57,7 @@ def evaluar_y_notificar_formularios():
 
         for prog in programaciones_cierre:
             form = prog.formulario
-            usuarios = db.query(models.UsuarioDB).filter(models.UsuarioDB.id_departamento == form.id_departamento).all()
+            usuarios = db.query(models.UserDB).filter(models.UserDB.id_departamento == form.id_departamento).all()
             
             for usuario in usuarios:
                 html = f"<h3>Recordatorio Urgente</h3><p>El formulario {form.nombre} cerrará pronto: {prog.fecha_fin}. Por favor, complétalo.</p>"
