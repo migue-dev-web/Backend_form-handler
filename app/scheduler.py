@@ -9,6 +9,12 @@ def evaluar_y_notificar_formularios():
     ahora = datetime.utcnow()
     
     try:
+
+        todas = db.query(models.FormScheduleDB).all()
+        print(f"📊 Total de programaciones encontradas en la BD: {len(todas)}")
+        for t in todas:
+            print(f"   -> Form ID: {t.id_formulario} | Inicio: {t.fecha_inicio} | Fin: {t.fecha_fin} | Apertura Enviada: {t.aviso_apertura_enviado}")
+
         # --- CASO A: NOTIFICACIÓN DE APERTURA ---
         # Formularios cuya fecha_inicio ya pasó, pero no se ha mandado el aviso
         programaciones_apertura = db.query(models.FormScheduleDB).filter(
@@ -16,13 +22,14 @@ def evaluar_y_notificar_formularios():
             models.FormScheduleDB.fecha_fin > ahora,
             models.FormScheduleDB.aviso_apertura_enviado == False
         ).all()
-
+        print(f"🎯 Programaciones que pasaron el filtro de fecha: {len(programaciones_apertura)}")
         for prog in programaciones_apertura:
             form = prog.formulario
             # Consumir usuarios relacionados al departamento del formulario
             usuarios = db.query(models.UsuarioDB).filter(models.UsuarioDB.id_departamento == form.id_departamento).all()
-            
+            print(f"   👥 Usuarios encontrados para el Depto {form.id_departamento}: {len(usuarios)}")
             for usuario in usuarios:
+                print(f"   📧 Intentando enviar correo a: {usuario.email}")
                 html = f"<h3>¡Hola, {usuario.nombre}!</h3><p>El formulario <b>{form.nombre}</b> ya está disponible para su llenado.</p>"
                 exito = email_service.enviar_correo(usuario.email, f"Apertura: {form.nombre}", html)
                 
@@ -38,7 +45,7 @@ def evaluar_y_notificar_formularios():
             # Marcar como enviado para no repetir en el próximo ciclo
             prog.aviso_apertura_enviado = True
             db.commit()
-
+            print("   ✅ Bandera 'aviso_apertura_enviado' cambiada a TRUE en la BD.")
         # --- CASO B: RECORDATORIO DE CIERRE ---
         # Formularios que cierran en menos de 24 horas y no se ha enviado aviso de cierre
         limite_cierre = ahora + timedelta(hours=24)
