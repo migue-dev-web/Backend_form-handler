@@ -26,8 +26,8 @@ def enviar_correo(destinatario: str, asunto: str, cuerpo_html: str):
     msg.attach(parte_html)
 
     try:
-        with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
-            server.starttls() # Conexión segura
+        with smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT) as server:
+            
             server.login(SMTP_USER, SMTP_PASSWORD)
             server.sendmail(SMTP_USER, destinatario, msg.as_string())
         return True
