@@ -1,36 +1,45 @@
 import os
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
+import requests
 from dotenv import load_dotenv
 
 load_dotenv()
 
-SMTP_SERVER = os.getenv("SMTP_SERVER") # O el de tu proveedor
-SMTP_PORT = int(os.getenv("SMTP_PORT", 587))
-SMTP_USER = os.getenv("SMTP_USER")                      # Tu correo/usuario registrado
-SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")              # Tu contraseña de aplicación
+
+BREVO_API_KEY = os.getenv("BREVO_API_KEY")
+REMITENTE_CORREO = os.getenv("SMTP_USER") 
 
 def enviar_correo(destinatario: str, asunto: str, cuerpo_html: str):
-    if not SMTP_USER or not SMTP_PASSWORD:
-        print("Configuración de SMTP incompleta. Correo no enviado.")
+    if not BREVO_API_KEY or not REMITENTE_CORREO:
+        print("Configuración de la API incompleta. Correo no enviado.")
         return False
 
-    msg = MIMEMultipart("alternative")
-    msg["Subject"] = asunto
-    msg["From"] = SMTP_USER
-    msg["To"] = destinatario
+    url_api = "https://api.brevo.com/v3/smtp/email"
+    
+    # Encabezados obligatorios para autenticarse con Brevo
+    headers = {
+        "accept": "application/json",
+        "content-type": "application/json",
+        "api-key": BREVO_API_KEY
+    }
 
-    # Adjuntar el diseño en HTML
-    parte_html = MIMEText(cuerpo_html, "html")
-    msg.attach(parte_html)
+    # Estructura del JSON que pide la documentación de Brevo
+    payload = {
+        "sender": {"email": REMITENTE_CORREO, "name": "Sistema de Formulario"},
+        "to": [{"email": destinatario}],
+        "subject": asunto,
+        "htmlContent": cuerpo_html
+    }
 
     try:
-        with smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT) as server:
+       
+        response = requests.post(url_api, json=payload, headers=headers)
+        
+        if response.status_code in [200, 201]:
+            return True
+        else:
+            print(f"Brevo rechazó el correo: {response.status_code} - {response.text}")
+            return False
             
-            server.login(SMTP_USER, SMTP_PASSWORD)
-            server.sendmail(SMTP_USER, destinatario, msg.as_string())
-        return True
     except Exception as e:
-        print(f"Error al enviar correo a {destinatario}: {e}")
+        print(f"Error de conexión al enviar correo vía API: {e}")
         return False
