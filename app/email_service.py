@@ -1,3 +1,4 @@
+
 import os
 import requests
 from dotenv import load_dotenv
@@ -42,4 +43,3 @@ def enviar_correo(destinatario: str, asunto: str, cuerpo_html: str):
             
     except Exception as e:
         print(f"Error de conexión al enviar correo vía API: {e}")
-        return False
