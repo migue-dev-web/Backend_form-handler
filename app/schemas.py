@@ -10,7 +10,7 @@ class UserBase(BaseModel):
 class UsuarioUpdate(BaseModel):
     nombre: Optional[str] = None
     email: Optional[EmailStr] = None
-    departamento: Optional[int] = None  # Ej: "sistemas", "admin", "contabilidad"
+    id_departamento: Optional[int] = None  
     password: Optional[str] = None
 
 class UserCreate(BaseModel):
