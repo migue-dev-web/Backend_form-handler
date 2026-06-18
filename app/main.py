@@ -139,7 +139,7 @@ def actualizar_usuario(
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
     # 3. Guardar estado anterior para el registro de auditoría
-    datos_anteriores = f"Nombre: {db_usuario.nombre}, Email: {db_usuario.email}, Depto: {db_usuario.departamento}"
+    datos_anteriores = f"Nombre: {db_usuario.nombre}, Email: {db_usuario.email}, Depto: {db_usuario.id_departamento}"
 
     # 4. Actualizar los campos que fueron enviados en la petición
     payload = usuario_data.model_dump(exclude_unset=True) # exclude_unset evita sobreescribir con None lo que no se mandó
