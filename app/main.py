@@ -134,7 +134,7 @@ def actualizar_usuario(
         raise HTTPException(status_code=403, detail="No autorizado para modificar usuarios")
 
     # 2. Buscar al usuario en la base de datos
-    db_usuario = db.query(models.UsuarioDB).filter(models.UsuarioDB.id == usuario_id).first()
+    db_usuario = db.query(models.UserDB).filter(models.UsuarioDB.id == usuario_id).first()
     if not db_usuario:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
