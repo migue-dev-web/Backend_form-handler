@@ -161,7 +161,7 @@ def actualizar_usuario(
         accion="EDITAR",
         tabla="usuarios",
         registro_id=usuario_id,
-        detalles=f"Antes -> {datos_anteriores} | Ahora -> Nombre: {db_usuario.nombre}, Email: {db_usuario.email}, Depto: {db_usuario.departamento}"
+        detalles=f"Antes -> {datos_anteriores} | Ahora -> Nombre: {db_usuario.nombre}, Email: {db_usuario.email}, Depto: {db_usuario.id_departamento}"
     )
 
     return {"detail": f"Usuario '{db_usuario.nombre}' actualizado con éxito."}
