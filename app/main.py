@@ -144,13 +144,18 @@ def actualizar_usuario(
     # 4. Actualizar los campos que fueron enviados en la petición
     payload = usuario_data.model_dump(exclude_unset=True) # exclude_unset evita sobreescribir con None lo que no se mandó
     
-    for key, value in payload.items():
-        if key == "password":
+    
+    if "password" in payload:
             # Si se envió una contraseña nueva, la encriptamos antes de guardarla
-            db_usuario.hashed_password = auth.get_password_hash(value)
-        else:
+        nueva_password = payload.pop("password")
+        if nueva_password and nueva_password.strip() != "":
+            # CORRECCIÓN AQUÍ: Cambiado a password_hash para que coincida con tu modelo
+            db_usuario.password_hash = auth.get_password_hash(nueva_password)
+    for key, value in payload.items():
+        if hasattr(db_usuario, key): 
             setattr(db_usuario, key, value)
-
+            
+    db.add(db_usuario)
     db.commit()
     db.refresh(db_usuario)
 
