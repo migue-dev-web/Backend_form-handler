@@ -146,15 +146,15 @@ def actualizar_usuario(
     
     
     if "password" in payload:
-            # Si se envió una contraseña nueva, la encriptamos antes de guardarla
+           
         nueva_password = payload.pop("password")
         if nueva_password and nueva_password.strip() != "":
-            # CORRECCIÓN AQUÍ: Cambiado a password_hash para que coincida con tu modelo
+            
             db_usuario.password_hash = auth.get_password_hash(nueva_password)
     for key, value in payload.items():
         if hasattr(db_usuario, key): 
             setattr(db_usuario, key, value)
-            
+
     db.add(db_usuario)
     db.commit()
     db.refresh(db_usuario)
