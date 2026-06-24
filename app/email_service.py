@@ -6,24 +6,25 @@ from dotenv import load_dotenv
 load_dotenv()
 
 GOOGLE_SCRIPT_URL = os.getenv("GOOGLE_SCRIPT_URL")
+GOOGLE_SCRIPT_TOKEN = os.getenv("GOOGLE_SCRIPT_TOKEN")
 
 def enviar_correo(destinatario: str, asunto: str, cuerpo_html: str):
-    if not GOOGLE_SCRIPT_URL:
+    if not GOOGLE_SCRIPT_URL or not GOOGLE_SCRIPT_TOKEN:
         print("Variable GOOGLE_SCRIPT_URL no configurada. Correo abortado.")
         return False
 
-
+    url_con_token = f"{GOOGLE_SCRIPT_URL}?token={GOOGLE_SCRIPT_TOKEN}"
     # Estructura del JSON que pide la documentación de Brevo
     payload = {
         "destinatario": destinatario,
-        "subject": asunto,  # El script busca data.asunto, cámbialo a "asunto" para que coincida con el js anterior
+        "subject": asunto,  
         "asunto": asunto,
         "cuerpo_html": cuerpo_html
     }
 
     try:
        
-        response = requests.post(GOOGLE_SCRIPT_URL, json=payload)
+        response = requests.post(url_con_token, json=payload)
         
         resultado = response.json()
         if response.status_code == 200:
