@@ -1,16 +1,18 @@
-from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi import FastAPI, Depends, HTTPException, status, APIRouter, Depends, Body
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from typing import List
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import or_, and_
 from datetime import datetime
+
 # Importaciones locales
 from . import models, schemas, auth, database 
 from .database import engine, get_db
 from .auth import get_current_user
 from app.scheduler import scheduler
 from .sheets_csv import leer_respuestas
+import app.report_service as report_service
 
 app = FastAPI()
 app.add_middleware(
@@ -502,3 +504,11 @@ def probar_cron_manualmente(db: Session = Depends(get_db)):
     print("🚀 Forzando la ejecución del scheduler manualmente...")
     evaluar_y_notificar_formularios()
     return {"detail": "Función ejecutada. Revisa los logs de Render ahora."}
+
+@app.post("/admin/reportes/descargar-excel")
+def descargar_reporte_excel(
+    formularios_ids: list[int] = Body(..., embed=True), 
+    db: Session = Depends(get_db)
+):
+    # Llama al servicio que procesa todo en memoria y devuelve el archivo directamente
+    return report_service.generar_excel_consolidado(formularios_ids, db)
