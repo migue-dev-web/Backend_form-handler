@@ -7,6 +7,11 @@ import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 import app.models as models
+from reportlab.lib.pagesizes import letter
+from reportlab.lib import colors
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle  # <-- REVISA ESTA LÍNEA
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.enums import TA_CENTER, TA_LEFT
 
 def generar_excel_consolidado(formularios_ids: list[int], db: Session):
     # 1. Buscar los registros de los formularios en la Base de Datos
