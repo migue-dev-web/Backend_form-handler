@@ -79,7 +79,7 @@ def listar_departamentos(db: Session = Depends(get_db)):
 
 @app.get("/usuarios", response_model=List[schemas.UserResponse])
 def listar_usuarios(db: Session = Depends(get_db), current_user: dict = Depends(auth.get_current_user)):
-    if current_user["departamento"] != "admin" or current_user["acces"] != 1:
+    if current_user["departamento"] != "admin" and current_user["acces"] != 1:
         raise HTTPException(status_code=403, detail="No autorizado")
 
     if current_user["acces"] == 1:
@@ -111,7 +111,7 @@ def crear_usuario(
     db: Session = Depends(get_db),
     current_user: dict = Depends(auth.get_current_user)
 ):
-    if current_user["departamento"] != "admin" or current_user["acces"] != 1:
+    if current_user["departamento"] != "admin" and current_user["acces"] != 1:
         raise HTTPException(status_code=403, detail="No autorizado")
 
     depto = db.query(models.DepartamentoDB).filter(models.DepartamentoDB.id == usuario_nuevo.id_departamento).first()
@@ -150,7 +150,7 @@ def actualizar_usuario(
     current_user: dict = Depends(auth.get_current_user)
 ):
     # 1. Verificar seguridad (Solo Admin puede editar usuarios)
-    if current_user["departamento"] != "admin" or current_user["acces"] != 1:
+    if current_user["departamento"] != "admin" and current_user["acces"] != 1:
         raise HTTPException(status_code=403, detail="No autorizado para modificar usuarios")
 
     # 2. Buscar al usuario en la base de datos
@@ -159,7 +159,7 @@ def actualizar_usuario(
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
     depto = db.query(models.DepartamentoDB).filter(models.DepartamentoDB.id == db_usuario.id_departamento).first()
-    if current_user["acces"] == 1 &  depto.codigo != current_user["departamento"]:
+    if current_user["acces"] == 1 and  depto.codigo != current_user["departamento"]:
         raise HTTPException(status_code=404, detail="Usuario no pertenece a tu Departamento")
 
     # 3. Guardar estado anterior para el registro de auditoría
@@ -207,7 +207,7 @@ def eliminar_usuario(
     db: Session = Depends(get_db),
     current_user: dict = Depends(auth.get_current_user)
 ):
-    if current_user["departamento"] != "admin" or current_user["acces"] != 1:
+    if current_user["departamento"] != "admin" and current_user["acces"] != 1:
         raise HTTPException(status_code=403, detail="No autorizado")
 
 
