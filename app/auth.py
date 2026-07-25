@@ -39,6 +39,6 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
         dept: str = payload.get("dept")
         if email is None:
             raise credentials_exception
-        return {"email": email, "departamento": dept}
+        return {"email": email, "departamento": dept, "acces": acces}
     except JWTError:
         raise credentials_exception
