@@ -118,7 +118,7 @@ def crear_usuario(
     if not depto:
         raise HTTPException(status_code=404, detail="El ID de departamento no existe")
 
-    if current_user["acces"] == 1 &  depto.codigo != current_user["departamento"]:
+    if current_user["acces"] == 1 and  depto.codigo != current_user["departamento"]:
         raise HTTPException(status_code=404, detail="No autorizado para crear un usuario con un Depto diferente al suyo")
 
     hashed_pw = auth.get_password_hash(usuario_nuevo.password)
@@ -216,7 +216,7 @@ def eliminar_usuario(
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
     depto = db.query(models.DepartamentoDB).filter(models.DepartamentoDB.id == db_user.id_departamento).first()
-    if current_user["acces"] == 1 &  depto.codigo != current_user["departamento"]:
+    if current_user["acces"] == 1 and  depto.codigo != current_user["departamento"]:
         raise HTTPException(status_code=404, detail="Usuario no pertenece a tu Departamento")
     
     if db_user.email == current_user["email"]:
