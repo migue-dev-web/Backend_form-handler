@@ -79,8 +79,9 @@ def listar_departamentos(db: Session = Depends(get_db)):
 
 @app.get("/usuarios", response_model=List[schemas.UserResponse])
 def listar_usuarios(db: Session = Depends(get_db), current_user: dict = Depends(auth.get_current_user)):
-    if current_user["departamento"] != "admin" or current_user["acces"] != 1:
+    if current_user["departamento"] != "admin" or int(current_user["acces"]) != 1:
         raise HTTPException(status_code=403, detail="No autorizado")
+    
 
     if current_user["acces"] == 1:
         usuarios = db.query(models.UserDB).join(models.UserDB.depto_rel).filter(models.UserDB.depto_rel==current_user["departamento"]).all()
