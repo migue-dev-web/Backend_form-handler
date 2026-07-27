@@ -79,6 +79,12 @@ def listar_departamentos(db: Session = Depends(get_db)):
 
 @app.get("/usuarios", response_model=List[schemas.UserResponse])
 def listar_usuarios(db: Session = Depends(get_db), current_user: dict = Depends(auth.get_current_user)):
+    print("--- DEPURACIÓN DE PERMISOS ---")
+    print("Departamento recibido:", repr(current_user.get("departamento")))
+    print("Tipo de Departamento:", type(current_user.get("departamento")))
+    print("Acceso recibido:", repr(current_user.get("acces")))
+    print("Tipo de Acceso:", type(current_user.get("acces")))
+    print("------------------------------")
     if current_user["departamento"] != "admin" or int(current_user["acces"]) != 1:
         raise HTTPException(status_code=403, detail="No autorizado")
     
