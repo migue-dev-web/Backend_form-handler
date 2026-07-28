@@ -90,7 +90,7 @@ def listar_usuarios(db: Session = Depends(get_db), current_user: dict = Depends(
     
 
     if current_user["acces"] == 1:
-        usuarios = db.query(models.UserDB).join(models.UserDB.depto_rel).filter(models.UserDB.depto_rel==current_user["departamento"]).all()
+        usuarios = db.query(models.UserDB).join(models.UserDB.depto_rel).filter(models.DepartamentoDB.codigo==current_user["departamento"]).all()
         return [
                     {
                         "id": u.id,
