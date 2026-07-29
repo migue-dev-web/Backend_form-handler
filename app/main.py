@@ -507,24 +507,37 @@ def respuestas_por_departamento(
     db: Session = Depends(get_db),
     current_user: dict = Depends(auth.get_current_user),
 ):
-    if current_user["departamento"] != "admin":
+    if current_user["departamento"] != "admin" and current_user["acces"] != 1:
         raise HTTPException(status_code=403, detail="No autorizado")
 
-    depto = db.query(models.DepartamentoDB).filter(
-        models.DepartamentoDB.id == depto_id
-    ).first()
-    if not depto:
-        raise HTTPException(status_code=404, detail="Departamento no encontrado")
+    if current_user["departamento"] == "admin":
+        depto = db.query(models.DepartamentoDB).filter(
+            models.DepartamentoDB.id == depto_id
+        ).first()
+        if not depto:
+            raise HTTPException(status_code=404, detail="Departamento no encontrado")
 
-    forms = db.query(models.FormularioDB).filter(
-        models.FormularioDB.id_departamento == depto_id
-    ).all()
+        forms = db.query(models.FormularioDB).filter(
+            models.FormularioDB.id_departamento == depto_id
+        ).all()
+
+    if current_user["acces"] == 1:
+        depto = db.query(models.DepartamentoDB).filter(
+            models.DepartamentoDB.id == current_user["departamento"]
+        ).first()
+        if not depto:
+            raise HTTPException(status_code=404, detail="Departamento no encontrado")
+
+        forms = db.query(models.FormularioDB).filter(
+            models.FormularioDB.id_departamento == current_user["departamento"]
+        ).all()
+        
 
     salida = []
     for f in forms:
         item = {
-            "id": f.id, "nombre": f.nombre, "tiene_sheet": False,
-            "headers": [], "rows": [], "total": 0, "error": None,
+        "id": f.id, "nombre": f.nombre, "tiene_sheet": False,
+        "headers": [], "rows": [], "total": 0, "error": None,
         }
         if not f.sheet_id:
             item["error"] = "Sin hoja de respuestas vinculada"
