@@ -522,14 +522,19 @@ def respuestas_por_departamento(
         ).all()
 
     if current_user["acces"] == 1:
+        
+        db_user = db.query(models.UserDB).filter(models.UserDB.email == current_user["email"]).first()
+        deptoId = db.query(models.DepartamentoDB).filter(models.DepartamentoDB.id == db_user.id_departamento).first()
+        if deptoId.codigo != current_user["departamento"]:
+            raise HTTPException(status_code=403, detail="No autorizado")
         depto = db.query(models.DepartamentoDB).filter(
-            models.DepartamentoDB.id == current_user["departamento"]
+            models.DepartamentoDB.id == deptoId.id
         ).first()
         if not depto:
             raise HTTPException(status_code=404, detail="Departamento no encontrado")
 
         forms = db.query(models.FormularioDB).filter(
-            models.FormularioDB.id_departamento == current_user["departamento"]
+            models.FormularioDB.id_departamento == deptoId.id
         ).all()
         
 
