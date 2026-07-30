@@ -525,7 +525,7 @@ def respuestas_por_departamento(
         
         db_user = db.query(models.UserDB).filter(models.UserDB.email == current_user["email"]).first()
         deptoId = db.query(models.DepartamentoDB).filter(models.DepartamentoDB.id == db_user.id_departamento).first()
-        if deptoId.codigo != current_user["departamento"]:
+        if depto_id != deptoId.id:
             raise HTTPException(status_code=403, detail="No autorizado")
         depto = db.query(models.DepartamentoDB).filter(
             models.DepartamentoDB.id == deptoId.id
