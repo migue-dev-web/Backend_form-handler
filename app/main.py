@@ -7,11 +7,11 @@ from sqlalchemy import or_, and_
 from datetime import datetime
 
 # Importaciones locales
-from . import models, schemas, auth, database 
+from . import models, schemas, auth, database, sheets_csv 
 from .database import engine, get_db
 from .auth import get_current_user
 from app.scheduler import scheduler
-from .sheets_csv import leer_respuestas
+from .sheets_csv import leer_respuestas, obtener_encabezados_formulario
 import app.report_service as report_service
 
 app = FastAPI()
@@ -579,3 +579,15 @@ def exportar_reporte_pdf(
 ):
     """Descarga un documento PDF formal con tablas consecutivas."""
     return report_service.generar_pdf_consolidado(formularios_ids, db)
+
+@app.get("/formularios/{form_id}/encabezados", response_model=list[str])
+def obtener_encabezados(
+    form_id: int, 
+    db: Session = Depends(get_db),
+    current_user: models.UserDB = Depends(auth.get_current_user) # Si requiere autenticación
+    
+):
+    if current_user["departamento"] != "admin":
+            raise HTTPException(status_code=403, detail="No autorizado")
+
+    return sheets_csv.report_service.obtener_encabezados_formulario(form_id, db)
