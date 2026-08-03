@@ -590,4 +590,4 @@ def obtener_encabezados(
     if current_user["departamento"] != "admin":
             raise HTTPException(status_code=403, detail="No autorizado")
 
-    return sheets_csv.report_service.obtener_encabezados_formulario(form_id, db)
+    return sheets_csv.obtener_encabezados_formulario(form_id, db)
