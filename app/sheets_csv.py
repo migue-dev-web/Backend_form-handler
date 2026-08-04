@@ -90,7 +90,7 @@ def leer_respuestas(sheet_id: str):
     body = [r + [""] * (len(headers) - len(r)) for r in body]
     return headers, body
 
-def obtener_encabezados_formulario(form_id: int, db: Session) -> list[str]:
+def obtener_encabezados_formulario(form_id: int, db: Session) -> list[dict]:
     form = db.query(models.FormularioDB).filter(models.FormularioDB.id == form_id).first()
     id_depto = form.id_departamento
     depto = db.query(models.DepartamentoDB).filter(models.DepartamentoDB.id == id_depto).first()
