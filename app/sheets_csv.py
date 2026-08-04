@@ -137,18 +137,18 @@ def obtener_encabezados_formulario(form_id: int, db: Session) -> list[dict]:
                 except Exception:
                     valor = 0
 
-            registros_normalizados.append({
-                "id_depto": id_depto,
-                "nombre_departamento": nombre_depto,
-                "nombre_ciclo": ciclo,
-                "nombre_programa": programa,
-                "indicador_nombre": indicador,
-                "valor_numerico": valor,
-                "genero": genero_std,
-                "nivel": str(fila.get('Perfil', 'Licenciatura')),
-                "modalidad": "Presencial",
-                "fecha_captura": fecha_str
-            })
+                registros_normalizados.append({
+                    "id_depto": id_depto,
+                    "nombre_departamento": nombre_depto,
+                    "nombre_ciclo": ciclo,
+                    "nombre_programa": programa,
+                    "indicador_nombre": indicador,
+                    "valor_numerico": valor,
+                    "genero": genero_std,
+                    "nivel": str(fila.get('Perfil', 'Licenciatura')),
+                    "modalidad": "Presencial",
+                    "fecha_captura": fecha_str
+                })
         else:
             cols_metricas = []
             for col_orig, col_norm in cols_map.items():
