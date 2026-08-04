@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Depends, HTTPException, status, APIRouter, Depends, Body
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Dict, Any
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import or_, and_
 from datetime import datetime
@@ -580,7 +580,7 @@ def exportar_reporte_pdf(
     """Descarga un documento PDF formal con tablas consecutivas."""
     return report_service.generar_pdf_consolidado(formularios_ids, db)
 
-@app.get("/formularios/{form_id}/encabezados", response_model=list[str])
+@app.get("/formularios/{form_id}/encabezados", response_model=List[Dict[str, Any]])
 def obtener_encabezados(
     form_id: int, 
     db: Session = Depends(get_db),
