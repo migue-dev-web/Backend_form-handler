@@ -591,3 +591,21 @@ def obtener_encabezados(
             raise HTTPException(status_code=403, detail="No autorizado")
 
     return sheets_csv.obtener_encabezados_formulario(form_id, db)
+
+@app.get("/formularios/{form_id}/estatus")
+def validar_estatus(
+    form_id: int, 
+    db: Session = Depends(get_db),
+    current_user: models.UserDB = Depends(auth.get_current_user)
+):
+        if current_user["departamento"] != "admin":
+            raise HTTPException(status_code=403, detail="No autorizado")
+
+        db_form = db.query(models.FormularioDB).filter(models.FormularioDB.id == form_id).first()
+        if db_form.estatus == "asignado":
+            tiene_datos = report_service.formulario_tiene_respuestas(form_id, db)
+            if tiene_datos:
+                setattr(db_form,"estatus","en proceso")
+                    
+
+
