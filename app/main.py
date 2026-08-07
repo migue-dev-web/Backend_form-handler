@@ -602,10 +602,14 @@ def validar_estatus(
             raise HTTPException(status_code=403, detail="No autorizado")
 
         db_form = db.query(models.FormularioDB).filter(models.FormularioDB.id == form_id).first()
+        if not db_form:
+            raise HTTPException(status_code=404, detail="Formulario no encontrado")
         if db_form.estatus == "asignado":
             tiene_datos = report_service.tiene_respuestas(db_form.sheet_id)
             if tiene_datos:
                 setattr(db_form,"estatus","en proceso")
-                    
-
+                db_form.estatus = "en proceso"
+                db.commit()         
+                db.refresh(db_form)    
+        return {"form_id": form_id, "estatus": db_form.estatus}
 
