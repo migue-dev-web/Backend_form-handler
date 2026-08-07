@@ -603,7 +603,7 @@ def validar_estatus(
 
         db_form = db.query(models.FormularioDB).filter(models.FormularioDB.id == form_id).first()
         if db_form.estatus == "asignado":
-            tiene_datos = report_service.formulario_tiene_respuestas(form_id, db)
+            tiene_datos = report_service.tiene_respuestas(form_id, db)
             if tiene_datos:
                 setattr(db_form,"estatus","en proceso")
                     
