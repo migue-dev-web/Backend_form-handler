@@ -607,9 +607,8 @@ def validar_estatus(
         if db_form.estatus == "asignado":
             tiene_datos = report_service.tiene_respuestas(db_form.sheet_id)
             if tiene_datos:
-                setattr(db_form,"estatus","en proceso")
                 db_form.estatus = "en proceso"
                 db.commit()         
                 db.refresh(db_form)    
-        return {"form_id": form_id, "estatus": db_form.estatus}
+        return {"form_id": form_id, "estatus": db_form.estatus, "tiene datos":tiene_datos}
 
