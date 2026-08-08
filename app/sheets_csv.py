@@ -147,7 +147,8 @@ def obtener_encabezados_formulario(form_id: int, db: Session) -> list[dict]:
                     "genero": genero_std,
                     "nivel": str(fila.get('Perfil', 'Licenciatura')),
                     "modalidad": "Presencial",
-                    "fecha_captura": fecha_str
+                    "fecha_captura": fecha_str,
+                    "status": form.estatus
                 })
         else:
             cols_metricas = []
