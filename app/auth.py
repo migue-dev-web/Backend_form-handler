@@ -4,11 +4,12 @@ from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, status
+import os
 
 # CONFIGURACIÓN - Cambia esto por algo aleatorio y largo
-SECRET_KEY = "super_secreto_para_produccion_12345" 
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 8  # El token durará 8 horas
+SECRET_KEY = os.getenv("SECRET_KEY")
+ALGORITHM = os.getenv("ALGORITHM")
+ACCESS_TOKEN_EXPIRE_MINUTES = os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES")  # El token durará 8 horas
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 # Configuración para encriptar contraseñas
