@@ -9,7 +9,7 @@ import os
 # CONFIGURACIÓN - Cambia esto por algo aleatorio y largo
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = os.getenv("ALGORITHM")
-ACCESS_TOKEN_EXPIRE_MINUTES = os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES")  # El token durará 8 horas
+ACCESS_TOKEN_EXPIRE_MINUTES = int( os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES")  )# El token durará 8 horas
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 # Configuración para encriptar contraseñas
